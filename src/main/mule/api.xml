@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4f7400e5-ebab-4c1a-af76-7b8e45f86d13" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="9bd751bc-0d8c-471f-bd16-0d7f222e22e0">
+		<http:request-connection host="api.quotable.io" port="443" protocol="HTTPS"/>
+	</http:request-config>
+	<flow name="get-random-quote" doc:id="ca6e5e13-2944-4d74-938b-e6ac8941a5f3" >
+		<http:listener doc:name="Listener" doc:id="c29e3b69-4a7f-438a-b0f2-01a4e35da4d8" config-ref="HTTP_Listener_config" path="/random-quote"/>
+		
+		<logger level="INFO" doc:name="Logger" doc:id="c67630cd-84ee-48dc-b062-92a37bd96dc0" message="Request received. Getting a random quote..."/>
+		<http:request method="GET" doc:name="Request" doc:id="cb489099-88aa-4831-a592-1fd88c8264d6" config-ref="HTTP_Request_configuration" path="/random"/>
+		<ee:transform doc:name="Transform Message" doc:id="a69b3cac-b1f0-4639-a08e-3895371e0f03" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"quote": payload.content,
+	"author": payload.author
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="8a6ba381-eacf-4f3b-b06d-1957b4a8109b" message="#[&quot;'&quot; ++ payload.quote ++ &quot;' - &quot; ++ payload.author]"/>
+	</flow>
+</mule>
