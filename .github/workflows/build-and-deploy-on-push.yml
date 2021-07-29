@@ -54,3 +54,36 @@ jobs:
       with:
           name: artifacts
           path: target/*.jar
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:    
+    
+    - uses: actions/checkout@v2
+    
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    
+    - uses: actions/download-artifact@master
+      with:
+        name: artifacts
+    
+    - name: Deploy to Sandbox
+      env:
+        USERNAME: ${{ secrets.anypoint_cicd_username }}
+        PASSWORD: ${{ secrets.anypoint_cicd_password }}
+        DECRYPTION_KEY: ${{ secrets.decryption_key }}
+      run: |
+        artifactName=$(ls *.jar | head -1)
+        mvn deploy -DmuleDeploy -e \
+         -Dmule.artifact=$artifactName \
+         -Danypoint.username="$USERNAME" \
+         -Danypoint.password="$PASSWORD" \
+         -Denv=Sandbox \
+         -Ddecryption.key="$DECRYPTION_KEY" \
+         -DskipTests
